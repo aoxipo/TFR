@@ -1,0 +1,7 @@
+2022-09-19 16:19:19 - root - INFO      - data_generate_h5.py : 371 line - load path:/home/data/lijl/DATA/Frbdata/Wang/hard/all.h5
+2022-09-19 16:19:19 - root - INFO      - data_generate_h5.py : 371 line - load path:/home/data/lijl/DATA/Frbdata/Wang/hard/false.h5
+2022-09-19 16:19:19 - root - INFO      - data_generate_h5.py : 351 line - 2048 train size:28, val size:8, test size:8
+256 train_size:0, val size:0, test size:0
+
+2022-09-19 16:19:19 - root - DEBUG     - FRB_train.py : 473 line - cost time:0
+2022-09-19 16:19:29 - root - DEBUG     - FRB_train.py : 111 line - start train and test

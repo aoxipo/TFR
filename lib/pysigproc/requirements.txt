@@ -1,0 +1,5 @@
+numpy
+h5py
+scikit-image
+scipy
+numba
