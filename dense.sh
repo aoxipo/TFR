@@ -1,1 +1,1 @@
-python run_predict.py --model 2 --data_dir /media/fast/dc7b0cc1-9b72-45ca-a52a-40796b1e7933/19C63/20190910/
+python run_predict.py --model 2 --data_dir /media/fast/dc7b0cc1-9b72-45ca-a52a-40796b1e7933/19C63/20190910/ --save_candidate True --need_code True

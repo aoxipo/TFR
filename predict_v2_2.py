@@ -10,7 +10,7 @@ import os
 
 
 class FRB_CA_Pipline():
-    def __init__(self,train_dir_path, name = "inceptionresnetv2" , method_type = 1, parameter_path_dict = None, CA_model_path = "./model/torch_linear/save/best.pkl") -> None:
+    def __init__(self,train_dir_path, name = "inceptionresnetv2" , method_type = 1, parameter_path_dict = None, CA_model_path = "./model/torch_linear/save/best.pkl", save_candidate = False) -> None:
         
         if parameter_path_dict is None:
             self.parameter_path_dict = { 
@@ -26,6 +26,7 @@ class FRB_CA_Pipline():
         self.dg = self.build_datagerate(train_dir_path)
         self.trainer = self.build_first_classifier(name, method_type)
         self.CA_model = self.build_CA_classifier(CA_model_path)
+        self.save_candidate = save_candidate
     
     # To do release the builder and class model
     def __del__(self):
@@ -68,13 +69,16 @@ class FRB_CA_Pipline():
         else:
             return vector_2048_pred.cpu().numpy(), 
 
-    def save_code(self, data_list, code_image_list, save_path = "./data/"):
+    def save_code(self, data_list, code_image_list, vector_2048_pred, save_path = "./data/"):
         self.dg.makedir(save_path)
         
         total = len(data_list[0])
         for index in range(total):
+            if(self.save_candidate and not vector_2048_pred[index]):
+                continue
             code_image = code_image_list[index]
             origin_image = data_list[0][index]
+            
             if(self.normal):
                 origin_image = origin_image - np.mean(origin_image, 0)
             save_name = data_list[1][index]
@@ -160,9 +164,6 @@ class FRB_CA_Pipline():
         for i in index_list:
             ans_list.append(data_2048_list[i])
         return ans_list
-
-
-
 
 
 

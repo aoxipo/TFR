@@ -25,7 +25,9 @@ def get_args_parser():
     parser.add_argument('--data_dir', default="/home/data/lijl/DATA/Frbdata/Wang/origin/", type=str, metavar='/home/data path/',
                         help='data dir path')
 
-    parser.add_argument('--need_code', default=False, type=bool, help='save map code')
+    parser.add_argument('--need_code', default=False, type=bool, help='save all map code')
+
+    parser.add_argument('--save_candidate', default=True, type=bool, help='only save candidate map code in name floder')
 
     parser.add_argument('--device', default='cuda',
                         help='device to use for training / testing')
@@ -57,7 +59,8 @@ if __name__ == '__main__':
     device = args.device
     seed = args.seed
     name = args.name
-    
+    save_candidate = args.save_candidate
+
     data_split = data_dir.split('/')
     log_name = ""
     for i in data_split:
@@ -74,7 +77,7 @@ if __name__ == '__main__':
     
     detect_pipline = FRB_CA_Pipline(data_dir, name, method_type=method_type, parameter_path_dict=parameter_path_dict, CA_model_path = GA_model_path)
     file_path_list = detect_pipline.dg.train_file_path_list
-    detect_pipline.detect_fits_list(log_path ,file_path_list, data_type =  1, need_save = need_code, need_code = need_code, image_save_path = image_save_path)
+    detect_pipline.detect_fits_list(log_path ,file_path_list, data_type =  1, need_save = need_code, need_code = need_code, image_save_path = image_save_path, save_candidate = save_candidate)
     print('-----end search-------')
     print('--------args----------')
     for k in list(vars(args).keys()):
