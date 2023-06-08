@@ -1,6 +1,6 @@
 # TFR
 
-TFR is frb classfiy deeplearning method. Global Attention Connect with two stage model for FRB classfiy
+TFR is frb classfiy deeplearning method. is our paper "Efficient FRB Signal Search with Two-Stage Weak Signal Feature Reconstruction" publish code
 
 # Environment
 
