@@ -440,7 +440,7 @@ class Train():
     def load_parameter(self, file_path = './save/' ):
         # self.model.load_state_dict(torch.load('model_parameter.pkl'))
         if use_gpu:
-            self.model.load_state_dict(torch.load(file_path))
+            self.model.load_state_dict(torch.load(file_path,map_location=device))
         else:
             self.model.load_state_dict(torch.load(file_path, map_location='cpu'))
 

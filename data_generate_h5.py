@@ -1,13 +1,12 @@
 import numpy as np
-import cv2 as h5py
-#import h5py
+import h5py
 import os
 import math
 import glob
 import datetime
 
 import matplotlib
-#matplotlib.use('AGG') # Fail to allocate bitmap
+matplotlib.use('AGG') # Fail to allocate bitmap
 import matplotlib.pyplot as plt
 
 from lib.util import *
@@ -26,7 +25,7 @@ SCALE = 8
 class DataGenerate():
     def __init__(self, train_dir_path = './data/', out_path = "./save/", data_set_number = "L", transform=None , batch_size = 16, file_type = '*.h5', data_shape = (256,256)):
         self.checkdir(train_dir_path)
-        self.normal = False
+        self.normal = True
         self.train_dir_path = train_dir_path
         self.train_file_path_list = self.get_file_path_list(self.train_dir_path, file_type = file_type)
         self.data_shape = data_shape
@@ -643,21 +642,15 @@ class DataGenerate():
         f.create_dataset("data_no", data=copy.deepcopy(image_list["no"]))
         f.close()
         
-    def crop_map_for_predict(self, file_path, data_type = 0, need_rot =True, normal = False):
+    def crop_map_for_predict(self, file_path, data_type = 0, need_rot =False, normal = False, need_origin = False):
         #filename = self.copyfile( file_path, out_dir +"/")
         hdulist = pyfits.open(file_path)
         data_list_2048 = []
         try:
             hdu0 = hdulist[0] 
             hdu1 = hdulist[1]
-            obsbw = hdu0.header['OBSBW']
             tsamp = hdu1.header['TBIN']
             data1 = hdu1.data['data']
-            obsfreq = hdu0.header['OBSFREQ']
-            fmin = obsfreq - obsbw/2.
-            fmax = obsfreq + obsbw/2.
-            fchannel = hdulist['SUBINT'].data[0]['DAT_FREQ']
-            fchn = len(fchannel)
             obsnchan = hdu0.header['OBSNCHAN']
 
             if len(data1.shape)>2:
@@ -669,25 +662,40 @@ class DataGenerate():
                 a,b = data1.shape 
                 data = data1.reshape(-1,int(obsnchan))
                 l,m=data.shape
-
+            
             key = m
             sub_num = int(l/key)
             subt_num = int(m/key)
-            print("read file:",file_path,",file shape:(%d,%d)".format(l,m))
+            print("read file:",file_path,",file shape:({},{})".format(l,m))
+            if need_origin:
+                origin_data = copy.deepcopy(data)
+                if(key*sub_num != l):
+                    origin_data_list = np.split(origin_data[:key*sub_num], sub_num, axis = 0)
+                    origin_data_list.append(data[-key:])
+                else:
+                    origin_data_list = np.split(origin_data, sub_num, axis = 0)
             if(need_rot):
                 data = np.rot90(data,2)
             if(normal):
                 data = (data - np.mean(data,0))
-                data[ data < 1 ] = 0
-                data[ data > 1 ] = 255
+                data = np.where(data>=1, 255, 0)
+                # data[ data < 1 ] = 0
+                # data[ data > 1 ] = 255
             
             data_list_2048_label = []
-            data_list_2048 = np.split(data, sub_num, axis = 0)
+            if(key*sub_num != l):
+                data_list_2048 = np.split(data[:key*sub_num], sub_num, axis = 0)
+                data_list_2048.append(data[-key:])
+            else:
+                data_list_2048 = np.split(data, sub_num, axis = 0)
+                
             #data_list_2048 = [ data_2048  for data_2048 in data_list_2048_col]
             for j in range(subt_num):
                 for i in range(sub_num):
                     save_name = "{}_{}.jpg".format(i,j)
                     data_list_2048_label.append(save_name)
+            if(key*sub_num != l):
+                data_list_2048_label.append("{}_{}_add.jpg".format(i,j))
             data_list_2048 = [ data_list_2048, data_list_2048_label]
 
             # data_list_2048 = []
@@ -713,7 +721,10 @@ class DataGenerate():
             print(e)
             return None
         hdulist.close()
-        return data_list_2048
+        if need_origin:
+            return data_list_2048, origin_data_list
+        else:
+            return data_list_2048
 
         
     def crop_map_for_predict_OTSU(self, file_path, data_type = 0, need_rot =True, normal = False):

@@ -1,9 +1,8 @@
 import argparse
-from ast import arg
 from pathlib import Path
 import os
 from predict_v2_2 import *
-
+import datetime
 
 
 def get_args_parser():
@@ -29,10 +28,18 @@ def get_args_parser():
 
     parser.add_argument('--save_candidate', default=True, type=bool, help='only save candidate map code in name floder')
 
+
+    parser.add_argument('--start', default=0, type=int, metavar='start file index',
+                        help='start search file  index')
+    parser.add_argument('--end', default=-1, type=int, metavar='end file index',
+                        help='end search file  index')
     parser.add_argument('--device', default='cuda',
                         help='device to use for training / testing')
+    parser.add_argument('--quantization', default = False, type = bool,
+                        help='using quantization model to predict only cpu, almost enchence inference speed 50%')
     parser.add_argument('--seed', default=3407, type=int)
     parser.add_argument('--name', default="dense", type=str)
+    
     return parser
 
 if __name__ == '__main__':
@@ -40,7 +47,7 @@ if __name__ == '__main__':
     parameter_path_dict = { 
         0:"./save_best/conv17_8x8_2048/best.pkl",
         1:"./save_best/inceptionresnetv2_8x8_2048/best.pkl",
-        2:"./save_best/dense121_8x8_2048//best.pkl",
+        2:"./save_best/dense121_8x8_2048/best.pkl",
         3:"./save_best/efficientnet_8x8_2048/best.pkl",
         4:"./save_best/cmt_8x8_2048_origin/best.pkl",
     }
@@ -60,13 +67,20 @@ if __name__ == '__main__':
     seed = args.seed
     name = args.name
     save_candidate = args.save_candidate
-
+    start = args.start
+    end = None if args.end == -1 else args.end 
     data_split = data_dir.split('/')
+    date = datetime.datetime.now()
+   
+    quantization = args.quantization 
     log_name = ""
     for i in data_split:
         log_name += i.replace("-",'_') + "_"
-    log_path = save_path + log_name + name + ".txt"
-    image_save_path = save_path + "/" + name + "/"
+    log_path = save_path +  str(date)[:10].replace('-',"") + log_name + name + ".txt"
+    image_save_path = save_path + "/" + name + "/" 
+    if not os.path.exists(image_save_path):
+        os.mkdir(image_save_path)
+    image_save_path = image_save_path + data_split[-2] + "/"
     print('--------args----------')
     for k in list(vars(args).keys()):
         print('%s: %s' % (k, vars(args)[k]))
@@ -75,9 +89,9 @@ if __name__ == '__main__':
     print('model path: %s'%(parameter_path_dict[method_type]))
     print('--------args----------\n')
     
-    detect_pipline = FRB_CA_Pipline(data_dir, name, method_type=method_type, parameter_path_dict=parameter_path_dict, CA_model_path = GA_model_path)
+    detect_pipline = FRB_CA_Pipline(data_dir, name, method_type=method_type, parameter_path_dict=parameter_path_dict, CA_model_path = GA_model_path, save_candidate = save_candidate, quantization = quantization)
     file_path_list = detect_pipline.dg.train_file_path_list
-    detect_pipline.detect_fits_list(log_path ,file_path_list, data_type =  1, need_save = need_code, need_code = need_code, image_save_path = image_save_path, save_candidate = save_candidate)
+    detect_pipline.detect_fits_list(log_path ,file_path_list,start = start, end = end, data_type =  1, need_save = need_code, need_code = need_code, image_save_path = image_save_path)
     print('-----end search-------')
     print('--------args----------')
     for k in list(vars(args).keys()):
@@ -86,4 +100,6 @@ if __name__ == '__main__':
     print('log_path: %s'%(log_path))
     print('model path: %s'%(parameter_path_dict[method_type]))
     print('--------args----------\n')
-    
+
+
+

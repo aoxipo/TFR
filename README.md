@@ -1,6 +1,6 @@
-# GAT
+# TFR
 
-GAT is frb classfiy deeplearning method. Global Attention Connect with two stage model for FRB classfiy
+TFR is frb classfiy deeplearning method. Global Attention Connect with two stage model for FRB classfiy
 
 # Environment
 
@@ -29,7 +29,7 @@ run run_predict.py  with parameters
 '--save_path', default='./predict_ans/'
  ## 'predict data save path'
 
-'--data_dir', default="/home/data/lijl/DATA/Frbdata/Wang/origin/", 
+'--data_dir', default="/home/data/lijl/DATA/Frbdata/fast/", 
 ## 'data dir path'
 
 '--need_code', default=False, type=bool, 

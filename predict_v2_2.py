@@ -6,11 +6,12 @@ import datetime
 import numpy as np
 from lib.util import *
 import os
+import platform
 
 
 
 class FRB_CA_Pipline():
-    def __init__(self,train_dir_path, name = "inceptionresnetv2" , method_type = 1, parameter_path_dict = None, CA_model_path = "./model/torch_linear/save/best.pkl", save_candidate = False) -> None:
+    def __init__(self,train_dir_path, name = "inceptionresnetv2" , method_type = 1, parameter_path_dict = None, CA_model_path = "./model/torch_linear/save/best.pkl", save_candidate = False, quantization = False, device = 'cpu') -> None:
         
         if parameter_path_dict is None:
             self.parameter_path_dict = { 
@@ -23,14 +24,20 @@ class FRB_CA_Pipline():
             self.parameter_path_dict = parameter_path_dict
         self.normal = True
         self.image_shape = (4096,4096)
+        self.device = device
         self.dg = self.build_datagerate(train_dir_path)
         self.trainer = self.build_first_classifier(name, method_type)
         self.CA_model = self.build_CA_classifier(CA_model_path)
         self.save_candidate = save_candidate
-    
+        self.quantization = quantization
+        
     # To do release the builder and class model
     def __del__(self):
         #print("wait for build del part")
+        pass
+    
+    def convert_model(self):
+        config_name = 'fbgemm' if platform.machine() == 'x86_64' else "qnnpack"
         pass
 
     def get_data_dict(self, data_list, data_type = 0):
@@ -59,15 +66,17 @@ class FRB_CA_Pipline():
             code_image_list.append(code_image)
             
         vector_2048_pred = self.CA_model.predict(np.array(code_image_list))  
-     
+        vector_2048_pred = vector_2048_pred.cpu().numpy()
         # low fitter
-        # for i in range(len(code_image_list)):
-        #     if(np.sum(code_image) > 15 ):
-        #         vector_2048_pred[i] = 0
+        for i in range(len(vector_2048_pred)):
+            if(vector_2048_pred[i] != 0):
+                if( np.sum(code_image_list[i]) <= 1 ):
+                    vector_2048_pred[i] = 0
+
         if need_code:
-            return vector_2048_pred.cpu().numpy(), code_image_list,
+            return vector_2048_pred, code_image_list,
         else:
-            return vector_2048_pred.cpu().numpy(), 
+            return vector_2048_pred
 
     def save_code(self, data_list, code_image_list, vector_2048_pred, save_path = "./data/"):
         self.dg.makedir(save_path)
@@ -87,15 +96,18 @@ class FRB_CA_Pipline():
             self.dg.save_data(save_path + save_code_name, code_image, save = True)
 
 
-    def detect_fits_list(self, save_path, file_path_list = None ,end = None, data_type = 0, need_save = False, need_code = False, image_save_path = None, need_rot = False):
+    def detect_fits_list(self, save_path, file_path_list = None , start = 0, end = None, data_type = 0, need_save = False, need_code = False, image_save_path = None, need_rot = False):
         if(image_save_path != None):
             self.dg.makedir(image_save_path)
         f = open(save_path, "w+")
         if file_path_list is None:
             file_path_list = self.dg.train_file_path_list
-        print("get file number total:",len(file_path_list))
+        total = len(file_path_list)
+        print("get file number total:",total)
         cost_time = []
-        for fits_file_path in file_path_list[:end]:
+        count = start
+        for fits_file_path in file_path_list[start:end]:
+            count += 1
             logging.info("process : {}".format(fits_file_path))
             start_time = datetime.datetime.now()
 
@@ -105,13 +117,18 @@ class FRB_CA_Pipline():
                 vector_2048_pred, code_image_list = self.test_one_fits_file(data_list, data_type = data_type, need_code = need_code)
             else:
                 vector_2048_pred = self.test_one_fits_file(data_list, data_type = data_type)
-            
-            if(need_save and data_type):
-                #print( fits_file_path.split("/")[-1])
-                self.save_code(data_list, code_image_list, save_path=image_save_path + fits_file_path.split("/")[-1][:-5]+"/" )    
-            cost_time.append((datetime.datetime.now() - start_time).seconds/len(vector_2048_pred)*64)
             have = np.sum(vector_2048_pred)
-            log_str = "file name:{}, cost:{:.4f} second, have:{},|| ".format(
+            # if(have == 1):
+            #     vector_2048_pred  = np.zeros(len(vector_2048_pred))
+            #     have = 0
+            if(need_save and data_type and have != 0):
+                #print( fits_file_path.split("/")[-1])
+                self.save_code(data_list, code_image_list, vector_2048_pred, save_path=image_save_path + fits_file_path.split("/")[-1][:-5]+"/" )    
+            cost_time.append((datetime.datetime.now() - start_time).seconds/len(vector_2048_pred)*64)
+            
+            log_str = "{}/{} file name:{}, cost:{:.4f} second, have:{},|| ".format(
+                count,
+                total,
                 fits_file_path, 
                 cost_time[-1], 
                 have,
@@ -123,11 +140,13 @@ class FRB_CA_Pipline():
             for pred in vector_2048_pred:
                 f.write(str(pred)+",")
             f.write("\n")
+
+
         print("\n total: avg cost time for 64 * 4096: \n",np.mean(cost_time))
         f.close()
 
     def build_CA_classifier(self, parameter_path):
-        CA = CA_Class(1,2, is_show = False)
+        CA = CA_Class(1,2, is_show = False)#.to(self.device)
         CA.load_parameter(parameter_path)
         return CA
 
@@ -145,7 +164,7 @@ class FRB_CA_Pipline():
             is_show = False,
             name = name,
             method_type = method_type,
-        )
+        )#.to(self.device)
         path = self.parameter_path_dict[method_type]
         print("load param : ",path)
         model.load_parameter(path)
@@ -158,11 +177,11 @@ class FRB_CA_Pipline():
         return data_2048_list
     
     #特定fits
-    def read_fits_by_index(self, file_path, index_list):
-        data_2048_list = self.get_crop_map(file_path)
+    def read_fits_by_index(self, file_path, index_list, data_type = 0, need_rot = False, normal = True, need_origin = True):
         ans_list = []
+        data_2048_list, origin_map = self.dg.crop_map_for_predict(file_path, data_type = data_type, need_rot = need_rot, normal = normal, need_origin = True)
         for i in index_list:
-            ans_list.append(data_2048_list[i])
+            ans_list.append([data_2048_list[i], origin_map[i]])
         return ans_list
 
 
