@@ -74,3 +74,12 @@ run run_predict.py  with parameters
 # Log
 
 Please refer to log folder for our experimental parameters and log results
+
+# Effectiveness
+
+| <img src=".\log\hotmap\4_0.jpg" alt="4_0" style="zoom:33%;" /> | <img src=".\log\hotmap\4_0_mask.jpg" alt="4_0_mask" style="zoom:150%;" /> |      |
+| ------------------------------------------------------------ | ------------------------------------------------------------ | ---- |
+| <img src=".\log\hotmap\11.jpg" alt="11" style="zoom:150%;" /> | <img src=".\log\hotmap\11_mask.jpg" alt="11_mask" style="zoom:150%;" /> |      |
+| <img src=".\log\hotmap\7_0.jpg" alt="7_0" style="zoom:33%;" /> | <img src=".\log\hotmap\7_0_mask.jpg" alt="7_0_mask" style="zoom:150%;" /> |      |
+| <img src=".\log\hotmap\28_0.jpg" alt="28_0" style="zoom:33%;" /> | <img src=".\log\hotmap\28_0_mask.jpg" alt="28_0" style="zoom:150%;" /> |      |
+
