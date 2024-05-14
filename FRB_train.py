@@ -447,7 +447,7 @@ class Train():
 if __name__ == "__main__":
     
 
-    batch_size = 1
+    batch_size = 32
     #train_dir_path = r"E:\ljl\Dataset\Frbdata\MixData/"
     #train_dir_path = r"E:\ljl\Dataset\Frbdata\DataSet/"
     #train_dir_path = r"/home/data/lijl/DATA/Frbdata/SmallTrain/"

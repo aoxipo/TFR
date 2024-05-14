@@ -13,6 +13,41 @@ astropy #using conda install astropy to install
 h5py
 ```
 
+# Dataset
+
+We have produced simulation datasets of different specifications and labeled real datasets, please send email to 407157175@qq.com
+
+# Train 
+
+run python train.py in cmd with config
+
+```
+batch_size = 32
+train_dir_path = "Path/To/DataSet"
+data_shape = (4096, 4096)
+method_dict ={
+    "conv17":0,
+    "inceptionresnetv2":1,
+    "dense121":2,
+    "efficientnet":3,
+    "cmt":4,
+    "ADFP":5,
+    "PCT":6,
+}
+
+trainer = Train(
+    image_shape = data_shape,
+    class_number = 2, 
+    is_show = False,
+    name = "PCT",
+    method_type = 6
+)
+```
+
+run python ./TFR/model/torch_linear/train.py in cmd for GA model and DDPM Score Match
+
+
+
 # Predict
 
 run run_predict.py  with parameters
@@ -36,3 +71,6 @@ run run_predict.py  with parameters
 ## 'save map code and save print data'
 ```
 
+# Log
+
+Please refer to log folder for our experimental parameters and log results
